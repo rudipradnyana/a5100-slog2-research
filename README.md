@@ -1,5 +1,7 @@
 # Sony A5100 S-Log2 Research
 
+![Sony A5100 S-Log2 Research](assets/banner.svg)
+
 > S-Log2 untuk Sony A5100. Patch RAM saja, tanpa flash, tanpa risiko brick.
 
 ![Status: WIP](https://img.shields.io/badge/status-WIP%20video%20not%20yet%20achieved-orange)
