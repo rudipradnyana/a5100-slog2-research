@@ -1,7 +1,7 @@
-# slog2_curve.bin — 2048 bytes, 1024×u16 LE
+# slog2_curve.bin, 2048 bytes, 1024×u16 LE
 
 Kurva S-Log2 12-bit hasil generate dari rumus publik Sony (bukan hasil ekstraksi
-firmware Sony — aman didistribusikan).
+firmware Sony, aman didistribusikan).
 
 Formula S-Log2 (Sony public whitepaper):
 - Input: linear sensor signal x (0.0-1.0, di atas 18% grey 0.18)

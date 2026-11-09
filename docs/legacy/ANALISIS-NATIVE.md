@@ -1,13 +1,13 @@
-# ANALISIS NATIVE — jalur Extended Gamma Table (a5100)
+# ANALISIS NATIVE, jalur Extended Gamma Table (a5100)
 
 > Generated: 2026-11-06 23:2x WIB, sesi offline (no camera).
 > Tools: objdump + capstone (Thumb-2), nm, strings, ELF parsing.
 > Target: libObj.so (16MB), libScalarDaemon.so (1.8MB), libcamera.so (198KB),
 >         sony.cameraex.odex / cameraex.dex.
 
-## TL;DR — jawaban untuk "apakah tabel gamma dipakai atau diabaikan?"
+## TL;DR, jawaban untuk "apakah tabel gamma dipakai atau diabaikan?"
 
-**DIPAKAI — ada jalur nyata, bukan ACK kosong.** Tapi ada temuan yang
+**DIPAKAI, ada jalur nyata, bukan ACK kosong.** Tapi ada temuan yang
 mengubah arah: `setExtendedGammaTable` kemungkinan besar adalah jalur
 **Picture Effect (foto still)**, BUKAN jalur **Picture Profile / S-Log (movie)**.
 S-Log2 (movie) hidup di jalur `PP_GAMMA` yang terpisah dan TIDAK di-expose
@@ -19,7 +19,7 @@ via CameraEx Java API di a5100.
 Java: CameraEx.native_setExtendedGammaTable(GammaTable, boolean)
         (DEX: method #447, signature (LGammaTable;Z)V)
   |
-  v  (JNI dynamic registration, library = libcamera.so — see below)
+  v  (JNI dynamic registration, library = libcamera.so, see below)
 libcamera.so: CameraHardwareDiadem::setExtendedGammaTable(int,int)
         @ 0x221e8, demangled export, ARM mode
         -> builds 3 SDComMsgParam: [id=7,4] [id=38,arg1] [id=127,arg2]
@@ -60,7 +60,7 @@ libObj.so: CamUser::SequenceSetExGammaTableControl
    → Nama parameternya secara eksplisit bilang "PICTURE_EFFECT". Artinya tabel extended
    gamma yang kita tulis terikat ke mode **Picture Effect**, bukan Picture Profile.
 
-3. **`setPictureEffectGammaForceOff`** — nama method ini juga "PictureEffect". `ForceOff=true`
+3. **`setPictureEffectGammaForceOff`**, nama method ini juga "PictureEffect". `ForceOff=true`
    berarti: matikan gamma Picture Effect bawaan supaya kurva custom (extended gamma table)
    yang aktif. Konsisten dengan pengamatan runtime kita (ForceOff BEFORE=false → AFTER=true).
 
@@ -71,17 +71,17 @@ libObj.so: CamUser::SequenceSetExGammaTableControl
 
 5. **`Liro` = imaging engine yang melayani still MAUPUN movie.**
    Bukti: `SetMovieAfDriveSpeedForLiro`, `SetStillEEFrameRateModeForLiro`,
-   `SetEEFrameRateByHDMIForLiro` — Liro dipakai keduanya. Jadi "diteruskan ke Liro"
+   `SetEEFrameRateByHDMIForLiro`, Liro dipakai keduanya. Jadi "diteruskan ke Liro"
    TIDAK otomatis berarti "diteruskan ke encoder video".
 
-6. **`CameraHardwareDiadem::setExtendedGammaTable(int,int)` hanya 2 int** — bukan 2048 byte.
+6. **`CameraHardwareDiadem::setExtendedGammaTable(int,int)` hanya 2 int**, bukan 2048 byte.
    Tabel aktual lewat jalur lain (GammaTable object native di libcamera / shared memory),
    yang diekstrak di lapis JNI. Pointer tabel (field +0x34 di daemon) adalah bukti tabel
    asli ikut dikirim, bukan cuma ACK.
 
 ## Kesimpulan (verdict)
 
-- **Tabel TIDAK diabaikan** — ada rantai IPC nyata sampai ke Liro.
+- **Tabel TIDAK diabaikan**, ada rantai IPC nyata sampai ke Liro.
 - **TAPI** jalur ini adalah **Extended Gamma (Picture Effect / still)**, dan a5100
   **tidak mengekspos Picture Profile / S-Log (movie)** lewat CameraEx Java API.
 - Konsekuensi: `setExtendedGammaTable` bisa mengubah kurva gamma untuk **foto (still)**,
@@ -99,11 +99,11 @@ libObj.so: CamUser::SequenceSetExGammaTableControl
    - Trace apakah pointer tabel (field +0x34) pernah dibaca oleh kode **encoder video**
      (cari xref ke struktur encode / M4ROOT / AVC / XAVC).
    - Bandingkan handler `MSGID_CAMERA_SET_EXTENDED_GAMMATABLE` (daemon @ 0x169e3b)
-     vs `MSGID_SET_PICTURE_PROFILE_CMD` (libObj @ 0xbf56c8) — apakah keduanya
+     vs `MSGID_SET_PICTURE_PROFILE_CMD` (libObj @ 0xbf56c8), apakah keduanya
      berujung di register Liro yang sama atau berbeda.
 3. **Cek apakah PP bisa dibuka paksa**: `pvt_ActionSetPictureProfile` ada di libObj,
    tapi a5100 gak punya menu PP. Kalau jalur PP bisa dipanggil langsung (bypass menu),
-   itu satu-satunya rute S-Log **movie** yang valid — tapi kemungkinan besar di-gate
+   itu satu-satunya rute S-Log **movie** yang valid, tapi kemungkinan besar di-gate
    oleh model/firmware.
 
 ## Catatan metodologi
@@ -116,7 +116,7 @@ libObj.so: CamUser::SequenceSetExGammaTableControl
 
 ---
 
-## UPDATE 2026-11-07 08:05 — HASIL EMPIRIS (definitif)
+## UPDATE 2026-11-07 08:05, HASIL EMPIRIS (definitif)
 
 Tes foto (GT20): set kurva S-Log2 + setPictureEffectGammaForceOff(true) + buka mode
 STILL + burstableTakePicture() → JPEG tersimpan (DSC04692.JPG, 6000x3376, 7.96MB).
@@ -136,17 +136,17 @@ bins        2086 3639 5561 2280 3803 4583 7285 60763
 bukan efek gamma. S-Log2 (yang bikin kontras flat + shadow naik drastis) akan
 menghasilkan histogram yang JAUH berbeda kalau beneran diterapkan.
 
-**Kesimpulan final:** `setExtendedGammaTable` adalah dead-end — tidak menyentuh foto
+**Kesimpulan final:** `setExtendedGammaTable` adalah dead-end, tidak menyentuh foto
 maupun video. S-Log2 hanya mungkin lewat Picture Profile (`PP_GAMMA_SLOG2`), yang
 di-gate firmware a5100 (`SetPictureProfileForLiro NON SUPPORTED`).
 
 **GT20 crash-after-save:** app SELESAI normal (log "probe finished" + "v20 end" +
-foto tersimpan). Crash terjadi di teardown kamera SETELAH foto aman — bukan kegagalan
+foto tersimpan). Crash terjadi di teardown kamera SETELAH foto aman, bukan kegagalan
 tes. Foto tetap valid dan dianalisis.
 
 **Foto hasil:** ~/a5100-re/ftp-root/gamma_DSC04692.JPG + normal_DSC04691.JPG
 
-## 2026-11-07 — S-Log2 value FOUND + gate solved (static, dual-confirmed)
+## 2026-11-07, S-Log2 value FOUND + gate solved (static, dual-confirmed)
 
 ### 1. Nilai numerik VALUEID_PP_GAMMA_SLOG2 = 0x480 (domain MWF/ObjMsg)
 
@@ -165,7 +165,7 @@ Grup nilai 4+6+2 persis mengikuti urutan blok nama VALUEID (still/movie/extra).
 `PICTURE_EFFECT_GAMMA_AUTO=0x4dc @0xed3be4`, `EX_GAMMA_TABLE_OFF=0x4da @0xed3bdc` ✓
 → SLOG2 @0xed3a74 = 0x4dc − 92 entri = **0x480** ✓, ITU709_800 = 0x481 ✓.
 Juga terverifikasi: EX_GAMMA 0x4da/0x4db ✓, MOVIE_HSIZE_NA=0x478, 1920=0x479 ... 640=0x47d,
-HSIZE_800=0x4cf, HSIZE_3840=0x4d0 (cocok dengan switch MOVIE_SIZE_H 8-nilai — param itu BUKAN gamma).
+HSIZE_800=0x4cf, HSIZE_3840=0x4d0 (cocok dengan switch MOVIE_SIZE_H 8-nilai, param itu BUKAN gamma).
 
 ### 2. Gate "SetPictureProfileForLiro NON SUPPORTED" = salah MsgID, bukan gate model
 
@@ -177,9 +177,9 @@ msgId == 0x75E6    → proses (generic set)
 else → log "...ForLiro NON SUPPORTED MsgID[0x%04x]"
 ```
 PP SET converter menerima **ObjMsg MsgID 0x75AE** (spesifik PP) atau 0x75E6.
-Kesimpulan lama "PP ditolak" salah — yang ditolak adalah MsgID yang salah.
+Kesimpulan lama "PP ditolak" salah, yang ditolak adalah MsgID yang salah.
 (Catatan: switch 8-nilai {0x478-0x47d,0x4cf,0x4d0} milik PARAMID_MOVIE_SIZE_H,
-bukan gamma — hampir saja salah label.)
+bukan gamma, hampir saja salah label.)
 
 ### 3. Wire format PP SET (CamMsgConv → SD), libObj @ 0x951900 worker 0x951940..0x952150
 
@@ -193,7 +193,7 @@ bukan gamma — hampir saja salah label.)
 `SystemEventIssuerCamera::setPictureProfile` @0x118248 (thumb):
 - struct 0x160B, 43 pasang {value@+8n, flag@+8n+4}
 - gamma: value @+0x88, flag @+0x8c → IPC param **0x238**
-- akhir: sendEvent(model=2, id=0x40) — cocok dgn byte[3]=0x40 jalur libObj
+- akhir: sendEvent(model=2, id=0x40), cocok dgn byte[3]=0x40 jalur libObj
 - resetPictureProfile default gamma=0 (STD) ✓ konsisten dgn indeks 0=STD
 - tidak ada caller internal & tidak diimpor libObj → caller asli = lib daemon lain
   (tidak ikut ter-dump). Route praktis: tiru jalur libObj (ObjMsg 0x75AE) atau
@@ -204,7 +204,7 @@ bukan gamma — hampir saja salah label.)
 1. **VALUEID_PP_GAMMA_SLOG2 = 0x480** (MWF); **nilai wire SD = 10** (0x0A).
 2. **Gate = MsgID routing**; jalur sah: ObjMsg 0x75AE/0x75E6 param 0x9685=0x480,
    atau native struct[0x88]=10 + flag[0x8c]=1 + cmd(2,0x40).
-   Risiko kecil: SD bisa minta 0x480 alih-alih 10 di param 0x238 — uji dua-duanya.
+   Risiko kecil: SD bisa minta 0x480 alih-alih 10 di param 0x238, uji dua-duanya.
 
 ### Next: GT21 (minimal, read-only dulu)
 - Tes A: native setPictureProfile dgn hanya gamma (flag+0x8c=1, val+0x88=10),

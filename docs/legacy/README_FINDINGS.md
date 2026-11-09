@@ -1,5 +1,5 @@
 # Sony A5100 (ILCE-5100) S-Log2 Reverse Engineering & In-Memory Enabler
-**Backup & Technical Findings Report — 7 November 2026**
+**Backup & Technical Findings Report, 7 November 2026**
 
 ---
 
@@ -166,9 +166,9 @@ python3 /Users/rudipradnyana/a5100-re/cam_cmd.py "/tmp/patch_avcam && /tmp/slog2
 ---
 
 ## 8. Langkah Verifikasi Terakhir (Next Steps)
-1. **Verifikasi Visual LCD:** Amati layar LCD kamera saat `slog2_direct` dieksekusi — bayangan hitam (*blacks*) akan terangkat (*lifted grey* / *flat profile* khas S-Log2).
+1. **Verifikasi Visual LCD:** Amati layar LCD kamera saat `slog2_direct` dieksekusi, bayangan hitam (*blacks*) akan terangkat (*lifted grey* / *flat profile* khas S-Log2).
 2. **Pengambilan File Video:**
-   - Rekam video 3–5 detik.
+   - Rekam video 3-5 detik.
    - Pindahkan file `.MP4` dari `/android/mnt/sdcard/PRIVATE/M4ROOT/CLIP/` (bisa lewat card reader di Mac agar super cepat 100MB/s, atau via FTP chunk).
 3. **Analisa Histogram (ffmpeg signalstats):**
    ```bash

@@ -1,8 +1,6 @@
-# TOOLCHAIN SETUP — Instalasi dari Nol (Host Mac)
+# TOOLCHAIN SETUP, Instalasi dari Nol (Host Mac)
 
-> Semua tool pihak ketiga yang dipakai proyek ini, dengan versi persis yang
-> terbukti bekerja + jebakan instalasinya. Tool-tool ini TIDAK disertakan di
-> repo (lisensi & ukuran) — setiap kontributor install sendiri.
+> Dokumen ini mencatat semua tool pihak ketiga yang proyek ini pakai, dengan versi persis yang jalan dan jebakan instalasinya. Repo ini tidak menyertakan tool itu karena lisensi dan ukuran. Kamu install sendiri.
 
 ---
 
@@ -17,7 +15,7 @@ brew install ffmpeg                   # verifikasi histogram clip
 pip3 install pyftpdlib capstone pyelftools numpy
 npm install -g rea-agents             # REA v6.7.0 (CLI RE otomatis)
 
-# Ghidra 12.1.4 — BUKAN 12.2 (lihat §2)
+# Ghidra 12.1.4, BUKAN 12.2 (lihat §2)
 # download: https://github.com/NationalSecurityAgency/ghidra/releases
 # tar ke ~/tools/ghidra_12.1.4_PUBLIC
 
@@ -36,7 +34,7 @@ native `mac_arm_64`**. Fix yang dipakai (transplant dari 12.2):
 
 ```bash
 # 1. install kedua versi sementara
-brew install ghidra          # ini 12.2.x — hanya untuk mencuri decompilernya
+brew install ghidra          # ini 12.2.x, hanya untuk mencuri decompilernya
 # atau download manual kedua rilis dari GitHub NSA/ghidra releases
 
 # 2. salin binary decompiler 12.2 → 12.1.4
@@ -63,13 +61,13 @@ rea --version                 # 6.7.0
 ```
 
 - Fungsi dalam proyek ini: import otomatis ELF ke Ghidra headless, inventory
-  fungsi/segment/string, pencarian symbol by regex — output JSON "evidence
+  fungsi/segment/string, pencarian symbol by regex, output JSON "evidence
   bundle" yang jadi dasar laporan `docs/firmware-notes/`.
 - Snapshot hasil analisis tersedia di `tools/rea-snapshots/` (libScalarDaemon:
-  9.352 prosedur, 13.145 string; libcamera; libObj.rea) — kontributor bisa
+  9.352 prosedur, 13.145 string; libcamera; libObj.rea), kontributor bisa
   mulai dari alamat yang sudah diketahui tanpa re-analisis penuh.
 
-## 4. Toolchain C untuk kamera (freestanding ARM — PENTING)
+## 4. Toolchain C untuk kamera (freestanding ARM, PENTING)
 
 `libc.so` kamera **rusak buat lld modern** (`invalid sh_info` in symbol table)
 → link dinamis menolak. Semua tool kita statis + freestanding:
@@ -82,20 +80,20 @@ xcrun clang -target armv7-none-linux-eabi -mcpu=cortex-a9 -mthumb \
 ```
 
 Tiga pitfall yang sudah mahal dipelajari:
-1. **Apple ld tidak bisa** — Mach-O only, butuh `ld.lld` (brew install lld).
-2. **ARM EABI: nomor syscall di r7** — syscall wrapper tanpa set r7 = EINVAL
+1. **Apple ld tidak bisa**, Mach-O only, butuh `ld.lld` (brew install lld).
+2. **ARM EABI: nomor syscall di r7**, syscall wrapper tanpa set r7 = EINVAL
    misterius (mmap2 "gagal" padahal argumen benar).
-3. **`_start` harus `naked`** — argc/argv dibaca dari stack (`ldr r0,[sp]`,
+3. **`_start` harus `naked`**, argc/argv dibaca dari stack (`ldr r0,[sp]`,
    `add r1,sp,#4`) via prolog eksplisit; kalau compiler buat prolog sendiri
    sebelum inline-asm, stack sudah bergeser → argv kacau.
 
 ## 5. Android build tools (APK GT-series)
 
 Sumber yang dipakai: `~/tools/android-14/` (build-tools: aapt, d8, apksigner,
-zipalign) + `android-2.2_r03-linux/android.jar` (froyo — kamera jalan di
+zipalign) + `android-2.2_r03-linux/android.jar` (froyo, kamera jalan di
 Android 2.3.7, API lama!) + JBR-17 untuk javac (`-source 1.8 -target 1.8`).
 
-Alternatif resmi: `sdkmanager "build-tools;34.0.0"` — aapt/d8/apksigner
+Alternatif resmi: `sdkmanager "build-tools;34.0.0"`, aapt/d8/apksigner
 setara. android.jar froyo bisa dari repo `Sable/android-platforms` di GitHub.
 
 Recipe lengkap build+sign: `docs/legacy/STATUS-HANDOFF.md` §"Build recipe GT21".
@@ -105,7 +103,7 @@ Keystore: `tools/keystore/gammatest-debug.keystore` (pass: android).
 
 - Repo: https://github.com/ma1co/pmca-re (57 MB di host; clone sendiri)
 - Dipakai untuk: install OpenMemories: Tweak + GT-series ke kamera via USB MTP
-- Butuh: `devices.yml` + `apps.yaml` (ada di `tools/pmca-config/`) — bukti
+- Butuh: `devices.yml` + `apps.yaml` (ada di `tools/pmca-config/`), bukti
   `ILCE-5100: arch CXD90014, apps 2.7, updatershell yes`
 - Jebakan: install menolak kalau baterai < 50% ("505 Low battery")
 
@@ -116,7 +114,7 @@ pip3 install capstone pyelftools numpy pyftpdlib
 # capstone 5.0.9: disasm Thumb-2 manual (Apple objdump TIDAK support force-thumb)
 # pyelftools: konversi VMA↔file offset via PT_LOAD (VMA==offset untuk segmen
 #             LOAD pertama semua lib kamera)
-# numpy: range-scan literal pool (pola PIC ldr rX,[pc] + add rX,pc — alamat
+# numpy: range-scan literal pool (pola PIC ldr rX,[pc] + add rX,pc, alamat
 #         absolut tidak ada di kode kamera; persamaan target = W + align4(A+4))
 ```
 
@@ -124,9 +122,9 @@ pip3 install capstone pyelftools numpy pyftpdlib
 
 | Tool | Alasan |
 |---|---|
-| Hopper |alternatif Ghidra — tidak dipakai (Ghidra + rea cukup) |
+| Hopper |alternatif Ghidra, tidak dipakai (Ghidra + rea cukup) |
 | NDK / arm-linux-gnueabi-gcc | tidak ada di Mac; freestanding clang+lld sudah cukup |
-| adb shell | adbd kamera stub — `error: closed` selalu |
+| adb shell | adbd kamera stub, `error: closed` selalu |
 | objdump Apple | tidak support `force-thumb` untuk Thumb-2 manual |
 | Ghidra 12.2 | rea 6.7.0 menolak (hanya 12.1.x) |
 

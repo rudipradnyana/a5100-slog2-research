@@ -1,10 +1,10 @@
-# a5100 S-Log2 — STATUS & HANDOFF
+# a5100 S-Log2, STATUS & HANDOFF
 
 > Last updated: 2026-11-06 23:05 WIB
 > Camera: Sony ILCE-5100 (a5100), firmware 3.10, kernel 3.0.27_nl-rt106
 > Owner: Rudi. Goal: real S-Log2 gamma in VIDEO (not just ACK).
 
-## TL;DR — where we are
+## TL;DR, where we are
 
 We can **load** an S-Log2 gamma curve into the camera and flip its activation
 switch ON, verified byte-for-byte. We have **NOT yet produced a single valid
@@ -32,7 +32,7 @@ Does the gamma table we write via `setExtendedGammaTable()` actually reach the
 3. Open options (DEX-verified): `CameraEx$OpenOptions` has `setInheritSetting(Z)`, `setMovieMode(I)`, `setPreview(Z)`, `setRecordingMode(I)`, `setTargetMedia(String)`. Constants on `CameraEx`: `RECORDING_MODE_STILL/MOVIE/CURRENT`, `MOVIE_MODE_SINGLE/MULTI_STREAMING/CURRENT`.
 4. Opening in MOVIE mode fixes the `InhibitedOperationException` on recording: GT17 got `prepare OK` + `start OK` (first time ever).
 5. `CameraEx.open()` MUST be on a background thread + Looper.prepare(), 20s timeout. Main-thread = freeze → battery pull.
-6. MediaRecorder (Sony `com.sony.scalar.media.MediaRecorder`): full API dumped. `setCamera(CameraEx)`, `setVideoSource(int)` VideoSource.CAMERA=1, `setAudioSource(int)` AudioSource.CAMCORDER=1, `setParameters(Parameters)`, `prepare()`, `start()`, `stop()`, `release()`. `setOutputMedia(String)` wants an **int** (NumberFormatException on "MPEG4") — output format goes via `Parameters.setOutputFormat(String)`.
+6. MediaRecorder (Sony `com.sony.scalar.media.MediaRecorder`): full API dumped. `setCamera(CameraEx)`, `setVideoSource(int)` VideoSource.CAMERA=1, `setAudioSource(int)` AudioSource.CAMCORDER=1, `setParameters(Parameters)`, `prepare()`, `start()`, `stop()`, `release()`. `setOutputMedia(String)` wants an **int** (NumberFormatException on "MPEG4"), output format goes via `Parameters.setOutputFormat(String)`.
 7. Valid PAL profile from GT17 `getSupportedParameters()` dump:
    - output-format: AVCHD, MPEG4, XAVCS
    - video-size: FHD_1080, HD_1080, VGA (NO HD_720!)
@@ -47,11 +47,11 @@ Does the gamma table we write via `setExtendedGammaTable()` actually reach the
 - GT13/14: MediaRecorder on thread without Looper.prepare() → RuntimeException.
 - GT15: setOutputMedia("MPEG4") → NumberFormatException; setAudioSource CAMCORDER → InhibitedOperationException; setParameters failed (bad order/profile).
 - GT17: profile HD_720+30p (INVALID for PAL) → start OK but stop() → IllegalStateException, no clip.
-- GT18: hard crash (battery pull) before any log line — reason unknown, likely proxy/listener setup or setCamera ordering triggered native hang.
+- GT18: hard crash (battery pull) before any log line, reason unknown, likely proxy/listener setup or setCamera ordering triggered native hang.
 
 ## Artifacts (backup-20261106-230552)
 
-- `~/a5100-re/backup-20261106-230552/` — all GT13..GT18 sources + APKs, DEX parsers + dumps, telnet helpers.
+- `~/a5100-re/backup-20261106-230552/`, all GT13..GT18 sources + APKs, DEX parsers + dumps, telnet helpers.
 - DEX parsers (work): `dexparse.py`, `dexfields.py`, `dexmethods.py`, `dexstrings.py`
 - DEX dumps: `dexdump.txt` (all methods), `dexstrings.txt` (all strings)
 - Stripped odex: `cex_stripped.dex`
@@ -59,7 +59,7 @@ Does the gamma table we write via `setExtendedGammaTable()` actually reach the
 - Curve: `~/a5100-re/slog2_curve.bin` (2048 bytes)
 - Full tarball backup: `/Users/rudipradnyana/a5100-backup-20261106-1321.tar.gz` (82MB)
 
-## Next step (tomorrow, OFFLINE — no camera)
+## Next step (tomorrow, OFFLINE, no camera)
 
 Run Hopper (or objdump/readelf) on `~/a5100-re/native/libObj.so` / `libcamera.so`
 to trace what `native_setExtendedGammaTable` actually does with the table:
@@ -79,13 +79,13 @@ encoder setup. This answers THE question before any more camera runs.
 
 ---
 
-## UPDATE 2026-11-06 23:34 — Analisis native OFFLINE selesai
+## UPDATE 2026-11-06 23:34, Analisis native OFFLINE selesai
 
 Hasil lengkap di `ANALISIS-NATIVE.md` (di repo ini). Ringkas:
 
 **Verdict:** tabel extended-gamma TIDAK diabaikan (ada rantai IPC nyata ke Liro imaging
 engine), TAPI jalur yang kita pakai (`setExtendedGammaTable` / `setPictureEffectGammaForceOff`)
-adalah jalur **Picture Effect (foto still)** — BUKAN Picture Profile / S-Log (movie).
+adalah jalur **Picture Effect (foto still)**, BUKAN Picture Profile / S-Log (movie).
 
 **Bukti kunci (byte-level, disasm capstone Thumb-2):**
 - `libcamera.so: CameraHardwareDiadem::setExtendedGammaTable(int,int)` @0x221e8 → kirim
@@ -102,13 +102,13 @@ adalah jalur **Picture Effect (foto still)** — BUKAN Picture Profile / S-Log (
 2. Bypass Picture Profile: trace `pvt_ActionSetPictureProfile` + `PP_GAMMA` di libObj,
    apakah bisa dipanggil langsung tanpa menu PP (a5100 gak punya menu PP).
 
-**Dependency baru:** `capstone` 5.0.7 (pip) untuk disasm Thumb-2 — Apple objdump tidak
+**Dependency baru:** `capstone` 5.0.7 (pip) untuk disasm Thumb-2, Apple objdump tidak
 support `force-thumb`.
 
 **Backup snapshot baru:** `/Users/rudipradnyana/a5100-backup-20261106-233428.tar.gz`
 (mencakup ANALISIS-NATIVE.md + native libs + backup 23:05).
 
-## UPDATE 2026-11-07 09:15 — S-Log2 value & gate SOLVED (statis), GT21 siap
+## UPDATE 2026-11-07 09:15, S-Log2 value & gate SOLVED (statis), GT21 siap
 
 Lengkap di `ANALISIS-NATIVE.md` + memory harian 2026-11-07. Ringkas:
 

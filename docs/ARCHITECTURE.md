@@ -1,8 +1,6 @@
-# ARCHITECTURE — Arsitektur Sony A5100 (ILCE-5100, fw 3.10)
+# ARCHITECTURE, Arsitektur Sony A5100 (ILCE-5100, fw 3.10)
 
-> Disusun dari bedah firmware resmi + decompile statis (Ghidra/capstone) +
-> observasi runtime. Semua klaim punya sumber: dokumentasi legacy atau
-> eksperimen yang bisa diulang (lihat EXPERIMENTS.md untuk status bukti).
+> Rudi susun dokumen ini dari bedah firmware resmi, decompile statis dengan Ghidra dan capstone, dan observasi runtime. Tiap klaim punya sumber: dokumen legacy atau eksperimen yang bisa kamu ulang. Kamu cek EXPERIMENTS.md untuk status bukti.
 
 ---
 
@@ -38,7 +36,7 @@
 ```
 Java app (GT-series APK)
   └─ com.sony.scalar.hardware.CameraEx          [DEX, Android HAL]
-      ├─ open(OpenOptions)           — WORKS (background thread + Looper!)
+      ├─ open(OpenOptions)          - WORKS (background thread + Looper!)
       ├─ createGammaTable() → GammaTable extends DeviceBuffer
       │    └─ getSize/read/write, setPictureEffectGammaForceOff(bool)
       └─ setExtendedGammaTable(GammaTable)
@@ -61,7 +59,7 @@ Java app (GT-series APK)
                                                 pointer baru (model check)
 ```
 
-**Kunci arsitektur #1 (ticket system):** tabel gamma tidak dikirim inline —
+**Kunci arsitektur #1 (ticket system):** tabel gamma tidak dikirim inline.
 hidup di shared-memory ticket; parameter "pointer" = alamat fisik ticket.
 `getTicketPhysicalAddr(handle, 6, ...)` yang menerjemahkan handle→alamat.
 
@@ -115,21 +113,21 @@ resetPictureProfile: default gamma=0 (STD)
 
 | Alamat | Isi | Catatan |
 |---|---|---|
-| 0x80000000–0x8fffffff | System RAM | Kernel text 80038000, data 80362000 |
+| 0x80000000-0x8fffffff | System RAM | Kernel text 80038000, data 80362000 |
 | **0x83541000** | av-cam.bin (11.2 MB) | ISP firmware; liro.ko memuat di sini |
 | 0x838119d0 / 0x83813dc4 / 0x83813dfc | 3 capability gate | offset dalam av-cam image |
 | **0x83e67020** | context struct DSP | [0x140]=PP slot, [0x256]=ExGammaOn, [0x260]=ptr |
 | 0x82df9000 (+508 KB) | parameter ISP | KANDIDAT kunci; diff Contrast hanya @0x5340C |
 | 0x92ec0000 (1.228.800) | image plane liveview 1280×960 | buffer ganda (+0x96000); churn besar |
-| 0xC0000000 (608 KB) | work memory ISP | baris 425-entri nilai 0–24 (bukan LUT) |
+| 0xC0000000 (608 KB) | work memory ISP | baris 425-entri nilai 0-24 (bukan LUT) |
 | 0x82d90000 (16 KB) | "IMCMN VER:109" + param | identik antar kontras |
 | 0x83438000 (32 KB) | descriptor/log | churn log saja |
-| **0xf1000000** | **register ISP** | ⚠ DILARANG dump — wedge 2× terkonfirmasi |
+| **0xf1000000** | **register ISP** | ⚠ DILARANG dump, wedge 2× terkonfirmasi |
 | 0x8e6d1000 / 0x965de000 | kecil, identik | eliminasi |
 | 0x82eae000 | filler 0x5A | eliminasi |
 
-`/proc/iomem` kamera: RAM region 0x93000000–0x9fffffff semua "System RAM"
-(16 bank × 8 MB) — heap daemon & kandidat LUT host-side di sini.
+`/proc/iomem` kamera: RAM region 0x93000000-0x9fffffff semua "System RAM"
+(16 bank × 8 MB), heap daemon & kandidat LUT host-side di sini.
 
 ## 5. Startup & recovery alur (penting buat eksperimen)
 

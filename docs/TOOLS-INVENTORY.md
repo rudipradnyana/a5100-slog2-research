@@ -1,7 +1,6 @@
-# Tools Inventory — Semua Tool yang Dipakai
+# Tools Inventory, Semua Tool yang Dipakai
 
-> Kategori: (H) host Mac, (C) berjalan di kamera via telnet, (A) app Android di kamera.
-> Semua source ada di repo ini kecuali disebut lain.
+> Kategori: (H) host Mac, (C) jalan di kamera via telnet, (A) app Android di kamera. Semua source ada di repo ini, kecuali tertulis lain.
 
 ---
 
@@ -9,11 +8,11 @@
 
 | Tool | Jenis | Fungsi | Source |
 |---|---|---|---|
-| **Telnet Tweak** (OpenMemories) | app di kamera | Buka telnetd port 23 tiap boot — pintu masuk utama. Tweak bawaan OpenMemories: Tweak → telnet enable. | bukan repo kita (prasyarat) |
+| **Telnet Tweak** (OpenMemories) | app di kamera | Buka telnetd port 23 tiap boot, pintu masuk utama. Tweak bawaan OpenMemories: Tweak → telnet enable. | bukan repo kita (prasyarat) |
 | **cam_cmd.py** | (H) Python | Eksekusi perintah telnet + auto-wait prompt `/ # `. Usage: `python3 cam_cmd.py IP=192.168.68.104 "uname -a" 20`. | `host-tools/cam_cmd.py` |
-| **FTP server (pyftpdlib)** | (H) Python | Penerima file dari kamera. Login cam/cam, passive 60000–60099, port 2121. Jalankan: `python3 ftp_server.py` (background). Kamera push via `busybox ftpput -u cam -p cam -P 2121 <MAC_IP> <remote> <local>`. | `host-tools/ftp_server.py` |
-| **busybox ftpget/ftpput** | (C) builtin | Transfer biner dua arah. **Sering gagal utk file besar** (1.2 MB putus) — solusi: chunk 4 KB (`dd bs=4096 skip=N count=1` + ftpput per chunk, reassembly di Mac). | — |
-| **ADB over TCP (5555)** | ❌ DEAD END | Port terbuka tapi `adb shell` selalu `error: closed` — adbd stub pabrik, bukan jalur masuk. | — |
+| **FTP server (pyftpdlib)** | (H) Python | Penerima file dari kamera. Login cam/cam, passive 60000-60099, port 2121. Jalankan: `python3 ftp_server.py` (background). Kamera push via `busybox ftpput -u cam -p cam -P 2121 <MAC_IP> <remote> <local>`. | `host-tools/ftp_server.py` |
+| **busybox ftpget/ftpput** | (C) builtin | Transfer biner dua arah. **Sering gagal utk file besar** (1.2 MB putus), solusi: chunk 4 KB (`dd bs=4096 skip=N count=1` + ftpput per chunk, reassembly di Mac). |, |
+| **ADB over TCP (5555)** | ❌ DEAD END | Port terbuka tapi `adb shell` selalu `error: closed`, adbd stub pabrik, bukan jalur masuk. |, |
 
 ## 2. Dump & analisis memori (dibuat hari ini, 2026-11-09)
 
@@ -26,9 +25,9 @@
 
 **Kenapa freestanding (no libc):** `native/libc.so` kamera punya symbol table
 rusak (`invalid sh_info`) → ld.lld menolak link dinamis. Solusi: syscall wrapper
-ARM EABI langsung (`svc #0`, nomor syscall di **r7** — bug pertama yang
+ARM EABI langsung (`svc #0`, nomor syscall di **r7**, bug pertama yang
 ditemukan), `naked _start` yang baca argc/argv dari stack (`ldr r0,[sp]`,
-`add r1,sp,#4` — bug kedua).
+`add r1,sp,#4`, bug kedua).
 
 **Toolchain ARM yang terbukti (tanpa NDK/gcc):**
 ```bash
@@ -37,15 +36,15 @@ xcrun clang -target armv7-none-linux-eabi -mcpu=cortex-a9 -mthumb \
 /opt/homebrew/opt/lld/bin/ld.lld --fix-cortex-a8 -static --entry _start \
   -o tool tool.o
 ```
-(Perlu `brew install lld` — Apple clang tidak bawa lld; Apple ld Mach-O-only.)
+(Perlu `brew install lld`, Apple clang tidak bawa lld; Apple ld Mach-O-only.)
 
 ## 3. Patch & injeksi (dari 7 Nov)
 
 | Tool | Jenis | Fungsi | Source |
 |---|---|---|---|
-| **patch_avcam** | (C) ARM dyn | Patch 3 capability gate di RAM `av-cam.bin` (via /dev/mem). Verifikasi byte asli dulu, baru tulis `00 20 70 47`. Output: `[+++] ALL ... GATES SUCCESSFULLY PATCHED`. **Efek hilang tiap reboot — jalankan ulang.** | `camera-tools/src/patch_avcam.c` |
+| **patch_avcam** | (C) ARM dyn | Patch 3 capability gate di RAM `av-cam.bin` (via /dev/mem). Verifikasi byte asli dulu, baru tulis `00 20 70 47`. Output: `[+++] ALL ... GATES SUCCESSFULLY PATCHED`. **Efek hilang tiap reboot, jalankan ulang.** | `camera-tools/src/patch_avcam.c` |
 | **find_avcam** | (C) ARM dyn | Scan RAM cari signature `av-cam.bin` → alamat load aktual. | `camera-tools/src/find_avcam.c` |
-| **slog2_direct** | (C) ARM dyn | ptrace RPC ke ScalarDaemon (PID 149): instantiate `PictureProfileParameter`, set gamma, panggil `setPictureProfile()`. Return 0 = ACK IPC saja (nilai 1165 salah — lihat koreksi). | `camera-tools/src/slog2_direct.c` |
+| **slog2_direct** | (C) ARM dyn | ptrace RPC ke ScalarDaemon (PID 149): instantiate `PictureProfileParameter`, set gamma, panggil `setPictureProfile()`. Return 0 = ACK IPC saja (nilai 1165 salah, lihat koreksi). | `camera-tools/src/slog2_direct.c` |
 | **slog2_v2/v3/v4, _standalone, _rpc, _ptrace, _live_clean, _injector, _full** | (C) | Varian eksperimen jalur injeksi (perkembangan iteratif). slog2_v4 = versi terakhir 7 Nov. | `camera-tools/src/` |
 | **GT21 / GT21r** | (A) APK | Probe-only: load libScalarDaemon, buka CameraEx still mode, enumerasi `SystemEventIssuerCamera` + `PictureProfileParameter`, log semua ke `/sdcard/GAMMALOG.TXT`. **TIDAK memanggil setPictureProfile. Belum pernah dijalankan.** | `camera-tools/android-apps/gt21/` |
 | **GT22** | (A) APK | `injectSLog2(10)`: panggil native setPictureProfile dgn struct 0x160B (gamma@+0x88=10, flag@+0x8c=1). **Belum pernah dijalankan.** | `camera-tools/android-apps/gt22/` |
@@ -66,12 +65,12 @@ xcrun clang -target armv7-none-linux-eabi -mcpu=cortex-a9 -mthumb \
 
 ## 5. Yang TIDAK dipakai (dan kenapa)
 
-- **OpenMemories Tweak lainnya** — hanya ubah setting, tidak sentuh gamma.
-- **Toko PMCA Sony** — mati (503), tapi tak dibutuhkan (USB install works).
-- **Sony SDK resmi** — tidak expose PP/gamma.
-- **Sony firmware updater** — hanya sentuh partisi setting/backup, bukan
-  firmware kamera (dan signed — jalur update tertutup).
-- **Magic Lantern-style flash patch** — firmware signed; dan kita tidak mau
+- **OpenMemories Tweak lainnya**, hanya ubah setting, tidak sentuh gamma.
+- **Toko PMCA Sony**, mati (503), tapi tak dibutuhkan (USB install works).
+- **Sony SDK resmi**, tidak expose PP/gamma.
+- **Sony firmware updater**, hanya sentuh partisi setting/backup, bukan
+  firmware kamera (dan signed, jalur update tertutup).
+- **Magic Lantern-style flash patch**, firmware signed; dan kita tidak mau
   brick risk. RAM-only adalah pilihan desain.
 
 ## 6. Kenapa semua tool harus dibuat sendiri (existing solutions preflight)
