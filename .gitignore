@@ -1,7 +1,7 @@
 # Sony firmware & proprietary binaries — NEVER commit (extract your own, see docs/REPRODUCE.md)
 *.bin
 !curve/slog2_curve.bin
-!evidence/*.bin
+!evidence/**/*.bin
 av-cam.bin
 libObj.so
 libScalarDaemon.so
