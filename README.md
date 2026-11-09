@@ -37,6 +37,7 @@
 | [`docs/TOOLS-INVENTORY.md`](docs/TOOLS-INVENTORY.md) | Semua tool (host/kamera/app), kenapa dibuat sendiri, toolchain ARM yang works |
 | [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) | Roadmap buat kontributor: urutan kerja berikutnya + protokol eksperimen |
 | [`docs/REPRODUCE.md`](docs/REPRODUCE.md) | Step-by-step menyiapkan kamera & menjalankan tool dari nol |
+| [`docs/TOOLCHAIN-SETUP.md`](docs/TOOLCHAIN-SETUP.md) | Instalasi tool pihak ketiga: Ghidra 12.1.4 (+jebakan mac_arm_64), REA, clang+lld, Android build-tools |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Arsitektur teknis: dual-core, liro.ko, rantai IPC, alamat penting |
 | [`docs/session-logs/`](docs/session-logs/) | Log mentah per tanggal (sumber historis) |
 | [`docs/legacy/`](docs/legacy/) | Dokumen fase awal (beberapa sudah terkoreksi — baca koreksinya) |
