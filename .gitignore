@@ -1,0 +1,33 @@
+# Sony firmware & proprietary binaries — NEVER commit (extract your own, see docs/REPRODUCE.md)
+*.bin
+!curve/slog2_curve.bin
+!evidence/*.bin
+av-cam.bin
+libObj.so
+libScalarDaemon.so
+libcamera.so
+libSysDef.so
+libMWF.so
+libsdcom.so
+libbackup.so
+libBizFw*.so
+sony.cameraex.odex
+cameraex.dex
+liro.ko
+backup.ko
+Backup.bin
+avcam_hdr.bin
+
+# build artifacts
+*.o
+__pycache__/
+classes/
+gen/
+obj/
+*.unsigned.apk
+*.idsig
+
+# personal / local state
+ftp-root/
+*.log
+.DS_Store
